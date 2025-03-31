@@ -1,0 +1,4 @@
+numpy
+Image
+rasterio
+jupyter
