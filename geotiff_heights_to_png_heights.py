@@ -1,10 +1,13 @@
 # generated using chatgpt, i didnt safe the prompt unfortunately
 # slightly modified
 
+import argparse
 import numpy as np
+import os
 import rasterio
 from rasterio.enums import Resampling
 from PIL import Image
+
 
 # Function to convert GeoTIFF height data to RGBA PNG
 def geotiff_to_rgba_png(input_geotiff, output_png):
@@ -16,7 +19,7 @@ def geotiff_to_rgba_png(input_geotiff, output_png):
         # Normalize the height data to range between 0 and 8191.875
         min_height = 0
         max_height = 8191.875
-        
+
         # Scale height values to 16-bit unsigned integer range (0 to 65535)
         scaled_heights = np.clip(height_data, min_height, max_height)
         scaled_heights = (scaled_heights / max_height) * 65535
@@ -40,7 +43,24 @@ def geotiff_to_rgba_png(input_geotiff, output_png):
         # Save the image as a PNG
         image.save(output_png)
 
-# Example usage
-input_geotiff = 'parabola.tif'  # Path to the input GeoTIFF file
-output_png = 'parabola.png'    # Path to the output PNG file
-geotiff_to_rgba_png(input_geotiff, output_png)
+
+# Set up command-line argument parsing
+def main():
+    parser = argparse.ArgumentParser(description="Convert GeoTIFF height data to RGBA PNG.")
+    parser.add_argument("input_geotiff", type=str, help="Path to the input GeoTIFF file, containing height data")
+    parser.add_argument("output_png", type=str, nargs="?", default=None, help="Path to the output PNG file (optional)")
+
+    args = parser.parse_args()
+
+    # If output_png is not provided, create a default based on input_geotiff
+    if args.output_png is None:
+        # Change extension from .tif or .tiff to .png
+        input_base = os.path.splitext(args.input_geotiff)[0]  # Remove the extension
+        args.output_png = input_base + ".png"
+
+    # Call the conversion function with the provided paths
+    geotiff_to_rgba_png(args.input_geotiff, args.output_png)
+
+
+if __name__ == "__main__":
+    main()
