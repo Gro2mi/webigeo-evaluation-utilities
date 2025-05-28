@@ -38,9 +38,8 @@ def get_release_areas(filename: Path) -> list[Polygon]:
 
 def dem_np_to_webigeo(path: Path, dem_header: dict, height_data: np.ndarray) -> np.ndarray:
     min_height = height_data.min()
-    if min_height < 0:
-        height_data = height_data - min_height
-    height_data = height_data + 500
+    if min_height < 1:
+        height_data = height_data - min_height + 1
     # Normalize the height data to range between 0 and 8191.875
     min_height = 0
     max_height = 8191.875
@@ -119,8 +118,8 @@ friction_models = {
     }
 
 def export_webigeo_settings(input_dir: Path, output_dir: Path, persistence: float=0.7, random_contribution: float=0.1, 
-                            alpha:float =25, num_paths_per_release_cell: int=4096, num_steps: int=2048, 
-                            density=200, slab_thickness=.5, friction_coeff=.155, drag_coeff=4000, friction_model="samosat", model=1) -> dict:
+                            alpha:float=25, num_paths_per_release_cell: int=4096, num_steps: int=2048, 
+                            density=200, slab_thickness=.5, friction_coeff=.155, drag_coeff=4000, friction_model="samosat", model=0) -> dict:
     settings = {
         "alpha": alpha,
         "num_paths_per_release_cell": num_paths_per_release_cell,
@@ -200,17 +199,19 @@ def plot_dem(ax, dem, xx, yy, dark=True):
 def get_levels(data, step=10):
     return np.arange(0.01, (int(data[np.isfinite(data)].max()/10) + 2) * 10, step)
 
-def plot_flow_velocity(flow_velocity, dem, xx, yy, title="Flow Velocity", step=10):
+def plot_flow_velocity(flow_velocity, dem, xx, yy, title="Flow Velocity", step=10, dark=True):
     
     from mpl_toolkits.axes_grid1 import make_axes_locatable
     fig, ax = plt.subplots(figsize=(10, 8))
     ax.set_aspect('equal')
-    plot_dem(ax, dem, xx, yy)
-    surf = ax.contourf(xx, yy, flow_velocity, cmap='viridis', levels=get_levels(flow_velocity, step), vmin=0.01)
+    plot_dem(ax, dem - 1, xx, yy, dark=False)
+    # surf = ax.contourf(xx, yy, flow_velocity, cmap='viridis', levels=get_levels(flow_velocity, step), vmin=0.01)
+    surf = ax.contourf(xx, yy, flow_velocity, cmap='magma', levels=get_levels(np.array(99), step), vmin=0.01)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.1)  # Adjust size and padding
-    cbar = fig.colorbar(surf, ax=ax, ticks=[round(tick) for tick in get_levels(flow_velocity, step)], cax=cax)
-    cbar.set_label("Flow Velocity (m/s)")
+    # cbar = fig.colorbar(surf, ax=ax, ticks=[round(tick) for tick in get_levels(flow_velocity, step)], cax=cax)
+    cbar = fig.colorbar(surf, ax=ax, cax=cax)
+    cbar.set_label("Lawinengeschwindigkeit (m/s)")
     ax.set(title=title)
     return fig, ax
 
